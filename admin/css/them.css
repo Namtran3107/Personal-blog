@@ -1,0 +1,5 @@
+@media (max-width: 1315px) and (min-width: 992px) {
+    .header__tool .account-item > .content {
+        display: none;
+    }
+}

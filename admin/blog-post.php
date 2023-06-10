@@ -1,0 +1,463 @@
+<?php 
+include "include/check_login.php";
+include "include/database.php";
+include "include/post.php";
+include "include/user.php";
+include "include/topic.php";
+
+$database = new database();
+$db = $database->connect();
+$blog_post = new blog_post($db);
+$user = new user($db);
+$topics = new topic($db);
+
+
+$user_ss = $_SESSION['user_id'];
+$user->user_id = $user_ss;
+$user->read();
+
+
+$stmt = $blog_post->read_all();
+
+$stm = $topics->read_all();
+
+
+if($_SERVER['REQUEST_METHOD'] == 'POST'){
+    $path = "upload/blog_post/";
+    if($_REQUEST['frm'] == 'add'){
+        $n=1;
+        while($row = $stm->fetch()){
+            if($row['topic_id']==$_REQUEST['blog_post_id_random']){
+                $blog_post->blog_topic = $row['topic_name'];
+            }
+            $n++;
+        }
+        $blog_post->blog_post_id_random = $_REQUEST['blog_post_id_random'];
+        $blog_post->blog_name_owner = $_REQUEST['blog_name_owner'];
+        $blog_post->blog_content = $_REQUEST['blog_content'];
+        $blog_post->blog_recomment = $_REQUEST['blog_recomment'];
+        if(!empty($_FILES['blog_image_topic'])){
+            $blog_post->blog_image_topic = $_FILES['blog_image_topic']['name'];
+            $fileExtension = pathinfo($_FILES['blog_image_topic']['name'], PATHINFO_EXTENSION);
+            $fileName = uniqid() . '.' . $fileExtension;
+            $blog_post->blog_image_topic_random = $fileName;
+            move_uploaded_file($_FILES['blog_image_topic']['tmp_name'], $path . $fileName);
+        }
+        if(!empty($_FILES['blog_avatar_topic'])){
+            $blog_post->blog_avatar_topic = $_FILES['blog_avatar_topic']['name'];
+            $fileExtension = pathinfo($_FILES['blog_avatar_topic']['name'], PATHINFO_EXTENSION);
+            $fileName = uniqid() . '.' . $fileExtension;
+            $blog_post->blog_avatar_topic_random = $fileName;
+            move_uploaded_file($_FILES['blog_avatar_topic']['tmp_name'], $path . $fileName);
+        }
+        if($blog_post->add()){
+        }
+    }
+    if($_REQUEST['frm'] == 'delete'){
+        $blog_post->blog_post_id = $_REQUEST['blog_post_id'];
+        $blog_post->read();
+        unlink($path.$blog_post->blog_image_topic_random);
+        unlink($path.$blog_post->blog_avatar_topic_random);
+        if($blog_post->delete()){
+            $status = "Add success";
+        }
+    }
+    if($_REQUEST['frm'] == 'update'){
+        $blog_post->blog_post_id = $_REQUEST['blog_post_id'];
+        $blog_post->read();
+        $blog_post->blog_name_owner = $_REQUEST['blog_name_owner'];
+        $blog_post->blog_topic = $_REQUEST['blog_topic'];
+        $blog_post->blog_content = $_REQUEST['blog_content'];
+        $blog_post->blog_recomment = $_REQUEST['blog_recomment'];
+        if(!empty($_FILES['blog_image_topic']['name'])){
+            if($blog_post->blog_image_topic_random != ""){
+                unlink($path.$blog_post->blog_image_topic_random);
+            }
+            $blog_post->blog_image_topic = $_FILES['blog_image_topic']['name'];
+            $fileExtension = pathinfo($_FILES['blog_image_topic']['name'], PATHINFO_EXTENSION);
+            $fileName = uniqid() . '.' . $fileExtension;
+            $blog_post->blog_image_topic_random = $fileName;
+            move_uploaded_file($_FILES['blog_image_topic']['tmp_name'], $path . $fileName);
+        }
+        if(!empty($_FILES['blog_avatar_topic']['name'])){
+            if($blog_post->blog_avatar_topic_random != ""){
+                unlink($path.$blog_post->blog_avatar_topic_random);
+            }
+            $blog_post->blog_avatar_topic = $_FILES['blog_avatar_topic']['name'];
+            $fileExtension = pathinfo($_FILES['blog_avatar_topic']['name'], PATHINFO_EXTENSION);
+            $fileName = uniqid() . '.' . $fileExtension;
+            $blog_post->blog_avatar_topic_random = $fileName;
+            move_uploaded_file($_FILES['blog_avatar_topic']['tmp_name'], $path . $fileName);
+        }
+        if($blog_post->update()){
+
+        }
+    }
+    header('Location: blog-post.php');
+}
+
+
+// echo "<pre>";
+// print_r($_REQUEST);
+// echo "</pre>";
+
+ ?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="au theme template">
+    <meta name="author" content="Hau Nguyen">
+    <meta name="keywords" content="au theme template">
+
+    <!-- Title Page-->
+    <title>Tables</title>
+
+    <!-- Fontfaces CSS-->
+    <link href="css/font-face.css" rel="stylesheet" media="all">
+    <link href="vendor/font-awesome-4.7/css/font-awesome.min.css" rel="stylesheet" media="all">
+    <link href="vendor/font-awesome-5/css/fontawesome-all.min.css" rel="stylesheet" media="all">
+    <link href="vendor/mdi-font/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
+
+    <!-- Bootstrap CSS-->
+    <link href="vendor/bootstrap-4.1/bootstrap.min.css" rel="stylesheet" media="all">
+
+    <!-- Vendor CSS-->
+    <link href="vendor/animsition/animsition.min.css" rel="stylesheet" media="all">
+    <link href="vendor/bootstrap-progressbar/bootstrap-progressbar-3.3.4.min.css" rel="stylesheet" media="all">
+    <link href="vendor/wow/animate.css" rel="stylesheet" media="all">
+    <link href="vendor/css-hamburgers/hamburgers.min.css" rel="stylesheet" media="all">
+    <link href="vendor/slick/slick.css" rel="stylesheet" media="all">
+    <link href="vendor/select2/select2.min.css" rel="stylesheet" media="all">
+    <link href="vendor/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" media="all">
+
+    <!-- font tao mẫu chữ -->
+    
+    <!-- Main CSS-->
+    <link href="css/theme.css" rel="stylesheet" media="all">
+    <link rel="stylesheet" href="css/edit.css">
+    <style type="text/css">
+        .panel-body {
+            width: 100%;
+        }
+        .modal.show .modal-dialog{
+            margin-top: 75px;
+        }
+        td {
+            width: calc(100% / 6);
+        }
+        .blog_post_id_random{
+            width: 50px;
+        }
+        .blog_name_owner{
+            width: 170px !important;
+        }
+        .change_color{
+            color: #4272d7;
+        }
+        .avatar_image_topic{
+            display: flex;
+            justify-content: center;
+        }
+        .blog_avatar_image_topic{
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        td {
+            width: calc(100% / 5);
+        }
+    </style>
+    
+</head>
+
+<body class="animsition">
+    <div class="page-wrapper">
+        <!-- HEADER MOBILE-->
+        <?php include 'include/header-mobile.php' ?>
+        <!-- END HEADER MOBILE-->
+
+        <!-- MENU SIDEBAR-->
+        <?php include 'include/menu.php' ?>
+        <!-- END MENU SIDEBAR-->
+
+        <!-- PAGE CONTAINER-->
+        <div class="page-container">
+            <!-- HEADER DESKTOP-->
+            <?php include 'include/header.php' ?>
+            <!-- END HEADER DESKTOP-->
+
+            <!-- MAIN CONTENT-->
+            <div class="main-content">
+                <div class="section__content section__content--p30">
+                    <div class="container-fluid">
+                        <!-- MODAL ADD -->
+                        <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="blog-post.php" method="POST" name="frm_edit" enctype="multipart/form-data">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="myModalLabel">Modal title Here</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="" style="display: flex; flex-direction: column;">
+                                                <label>Topic blog</label>
+                                                <select id="blog_post_id_random" name=" blog_post_id_random">
+                                                    <?php 
+                                                    $num = 1;
+                                                    while($row = $stm->fetch()){
+                                                     ?>
+                                                    <!-- } -->
+                                                  <option value="<?php echo $row['topic_id'] ?>"><?php echo $row['topic_name'] ?></option>
+                                                    <?php $num++;} ?>
+                                                </select>
+                                            </div>
+                                             <div class="">
+                                                <label>Your name</label>
+                                                <input class="form-control" name="blog_name_owner" id="blog_name_owner">
+                                            </div>
+                                            <div class="blog_image_topic">
+                                                <label>Image Topic</label>
+                                                <input type="file" class="form-control" name="blog_image_topic" id="blog_image_topic">
+                                            </div>
+                                            <div class="blog_avatar_topic">
+                                                <label>Avatar</label>
+                                                <input type="file" class="form-control" name="blog_avatar_topic" id="blog_avatar_topic">
+                                            </div>
+                                            <div>
+                                                <label>Name Content</label>
+                                                <input class="form-control" name="blog_content" id="blog_content">
+                                            </div>
+                                            <div class="blog_recomment">
+                                                <label>Write Recomment</label>
+                                                <textarea class="form-control" rows="3" name="blog_recomment" id="blog_recomment"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <input type="hidden" name="frm" value="add">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary">Save changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- end Modal -->
+                        <div class="panel-heading">
+                                <button class="btn btn-warning" data-toggle="modal" data-target="#addModal">Thêm</button>
+                        </div>
+                        <div class="row">
+                            
+                            <div class="panel-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Owner's Name</th>
+                                            <th>Blog Topic</th>
+                                            <th class="display-none">Blog Content</th>
+                                            <th class="display-none">Date Create</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <?php 
+                                    $num = 1;
+                                    
+                                    while ($row = $stmt->fetch()) {
+                                    
+                                     ?>
+                                    <tbody>
+                                        
+                                        <tr class="success">
+                                            <td class="blog_name_owner"><?php echo $row['blog_name_owner'] ?></td>
+                                            <td><?php echo $row['blog_topic'] ?></td>
+                                            <td class="blog_content display-none"><?php echo $row['blog_content'] ?></td>
+                                            <td class="display-none"><?php echo $row['blog_date'] ?></td>
+                                            <td><button class="btn btn-primary" data-toggle="modal" data-target="<?php echo '#deleteModal'.$row['blog_post_id'] ?>">Xoá</button>
+                                                <button class="btn btn-danger" data-toggle="modal" data-target="<?php echo '#updateModal'.$row['blog_post_id'] ?>">Sửa</button>
+                                                <button class="btn" data-toggle="modal" data-target="<?php echo '#see'.$row['blog_post_id'] ?>" style="background-color: #ccc;">Xem</button>
+                                            </td>
+                                        </tr>
+
+                                        <!-- modal  Delete-->
+                                        <div class="modal fade" id="<?php echo 'deleteModal'.$row['blog_post_id'] ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form action="blog-post.php" method="POST" name="frm_delete">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title" id="myModalLabel">Modal title Here</h4>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                            <input type="hidden" class="form-control" name="blog_post_id" id="blog_post_id" value="<?php echo $row['blog_post_id'] ?>">
+                                                        </div>
+                                                        <p style="margin: 0 auto;">Ban co muon xoa</p>
+                                                        <div class="modal-footer">
+                                                            <input type="hidden" name="frm" value="delete">
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-primary">Save changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End MODAL -->
+                                        <!-- modal  see-->
+                                        <div class="modal fade" id="<?php echo 'see'.$row['blog_post_id'] ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form action="blog-post.php" method="POST" name="frm_update" enctype="multipart/form-data">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title" id="myModalLabel">Modal title Here</h4>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="blog_name_owner">
+                                                                <h3 class="change_color">Your name</h3>
+                                                                <p><?php echo $row['blog_name_owner'] ?></p>
+                                                            </div>
+                                                            <div class="avatar_image_topic">
+                                                                <div class="blog_avatar_image_topic">
+                                                                    <h3 class="change_color">Image Topic</h3>
+                                                                    <img class="images_blog_post" src="<?php echo 'upload/blog_post/'.$row['blog_image_topic_random']; ?>" alt="">
+                                                                </div>
+                                                                <div class="blog_avatar_image_topic">
+                                                                    <h3 class="change_color">Avatar</h3>
+                                                                    <img class="images_blog_post" src="<?php echo 'upload/blog_post/'.$row['blog_avatar_topic_random']; ?>" alt="">
+                                                                </div>
+                                                            </div>
+                                                             <div class="blog_topic">
+                                                                <h3 class="change_color">Name Topic</h3>
+                                                                <p><?php echo $row['blog_topic'] ?></p>
+                                                            </div>
+                                                            <div>
+                                                                <h3 class="change_color">Name Content</h3>
+                                                                <p><?php echo $row['blog_content'] ?></p>
+                                                            </div>
+                                                            <div class="blog_recomment">
+                                                                <h3 class="change_color">Write Recomment</h3>
+                                                                <p><?php echo $row['blog_recomment'] ?></p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End see -->
+                                        <!-- modal  Update-->
+                                        <div class="modal fade" id="<?php echo 'updateModal'.$row['blog_post_id'] ?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form action="blog-post.php" method="POST" name="frm_update" enctype="multipart/form-data">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title" id="myModalLabel">Modal title Here</h4>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                                            <!-- id để req -->
+                                                            <input type="hidden" class="form-control" name="blog_post_id" id="blog_post_id" value="<?php echo $row['blog_post_id'] ?>">
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            
+                                                            <div class="">
+                                                                <label>Your name</label>
+                                                                <input class="form-control" name="blog_name_owner" value="<?php echo $row['blog_name_owner'] ?>" id="blog_name_owner">
+                                                            </div>
+                                                            <div class="blog_image_topic">
+                                                                <label>Image Topic</label>
+                                                                <input type="file" class="form-control" name="blog_image_topic" id="blog_image_topic">
+                                                            </div>
+                                                            <div class="blog_avatar_topic">
+                                                                <label>Avatar</label>
+                                                                <input type="file" class="form-control" name="blog_avatar_topic" id="blog_avatar_topic">
+                                                            </div>
+                                                            <div>
+                                                                <label>Name Content</label>
+                                                                <input class="form-control" name="blog_content" value="<?php echo $row['blog_content'] ?>" id="blog_content">
+                                                            </div>
+                                                            <div class="blog_recomment">
+                                                                <label>Write Recomment</label>
+                                                                <textarea class="form-control" rows="3" name="blog_recomment" id="blog_recomment"><?php echo $row['blog_recomment'] ?></textarea>
+                                                            </div>
+                                                            <div class="" style="display: flex; flex-direction: column;">
+                                                                <label>Name Topic</label>
+                                                                <select id="blog_topic" name="blog_topic">
+                                                                    <?php 
+                                                                    $st = $topics->read_all();
+                                                                        $nam=1;
+                                                                        while($row = $st->fetch()){
+                                                                         ?>
+                                                                      <option value="<?php echo $row['topic_name'] ?>"><?php echo $row['topic_name'] ?></option>
+                                                                    <?php 
+                                                                     $nam= $nam+1;
+                                                                    } ?>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <input type="hidden" name="frm" value="update">
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-primary">Save changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <?php
+                                        $num++; 
+                                        }
+                                         ?>
+
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="copyright">
+                                    <p>Copyright © 2018 Colorlib. All rights reserved. Template by <a href="#">Trần Ngọc Nam</a>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Jquery JS-->
+    <script src="vendor/jquery-3.2.1.min.js"></script>
+    <!-- Bootstrap JS-->
+    <script src="vendor/bootstrap-4.1/popper.min.js"></script>
+    <script src="vendor/bootstrap-4.1/bootstrap.min.js"></script>
+    <!-- Vendor JS       -->
+    <script src="vendor/slick/slick.min.js">
+    </script>
+    <script src="vendor/wow/wow.min.js"></script>
+    <script src="vendor/animsition/animsition.min.js"></script>
+    <script src="vendor/bootstrap-progressbar/bootstrap-progressbar.min.js">
+    </script>
+    <script src="vendor/counter-up/jquery.waypoints.min.js"></script>
+    <script src="vendor/counter-up/jquery.counterup.min.js">
+    </script>
+    <script src="vendor/circle-progress/circle-progress.min.js"></script>
+    <script src="vendor/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="vendor/chartjs/Chart.bundle.min.js"></script>
+    <script src="vendor/select2/select2.min.js">
+    </script>
+
+    <!-- Main JS-->
+    <script src="js/main.js"></script>
+    <script src="js/edit.js"></script>
+</body>
+
+</html>
+<!-- end document-->
